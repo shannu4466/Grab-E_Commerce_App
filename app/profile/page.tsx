@@ -18,18 +18,18 @@ type User = {
 export default function Profile() {
     const [authenticated, setAuthenticated] = useState<boolean>(false)
     const [userDetails, setUserDetails] = useState<User[]>([])
-    const { user } = useAuth()
+    const { user, loading } = useAuth()
     const router = useRouter()
 
     useEffect(() => {
-        if (!user) {
+        if (!user && !loading) {
             router.replace("/login")
-        } else {
+        } else if (!loading) {
             // eslint-disable-next-line react-hooks/set-state-in-effect
             setUserDetails(user)
             setAuthenticated(true)
         }
-    }, [user, router])
+    }, [user, router, loading])
 
     if (!authenticated) {
         return null
@@ -40,7 +40,7 @@ export default function Profile() {
             <Sidebar />
             <div className="ml-[10%] mt-[5%] p-6 h-full">
                 <h1 className="text-3xl font-bold text-blue-950">Profile</h1>
-                <div className="flex mt-[10%]">
+                <div className="flex flex-col md:flex-row items-center mt-[10%]">
                     <div className="border rounded-[50%] p-5 mr-10">
                         <Image
                             src={user?.image}
@@ -49,9 +49,9 @@ export default function Profile() {
                             width={100}
                         />
                     </div>
-                    <div>
+                    <div className="flex flex-col justify-start items-center md:items-start">
                         <h1 className="text-2xl font-bold">Name: {userDetails.firstName} {userDetails.lastName}</h1>
-                        <h1 className="text-xl">Email: {userDetails.email}</h1>
+                        <h1 className="text-xl">Email: {userDetails.email.slice(0, 5)}XXXXX{userDetails.email.slice(20)}</h1>
                         <h1 className="text-xl">Gender: {userDetails.gender}</h1>
                         <h1 className="text-xl">Username: {userDetails.username}</h1>
                     </div>
