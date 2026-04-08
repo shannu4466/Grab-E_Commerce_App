@@ -13,12 +13,14 @@ import {
 ======================= */
 
 export interface Product {
-    id: string;
+    id: number;
     title: string;
     price: number;
 }
 
 export interface CartItem extends Product {
+    discountPercentage: any;
+    images: any;
     quantity: number;
 }
 
@@ -28,9 +30,11 @@ interface CartState {
 
 type CartAction =
     | { type: "ADD_TO_CART"; payload: Product }
-    | { type: "REMOVE_FROM_CART"; payload: string }
+    | { type: "REMOVE_FROM_CART"; payload: number }
     | { type: "CLEAR_CART" }
-    | { type: "LOAD_CART"; payload: CartItem[] };
+    | { type: "LOAD_CART"; payload: CartItem[] }
+    | { type: "INCREASE_QUANTITY", payload: number }
+    | { type: "DECREASE_QUANTITY", payload: number };
 
 /* =======================
    CONTEXT TYPE
@@ -39,8 +43,10 @@ type CartAction =
 interface CartContextType {
     cart: CartItem[];
     addToCart: (product: Product) => void;
-    removeFromCart: (id: string) => void;
+    removeFromCart: (id: number) => void;
     clearCart: () => void;
+    increaseQuantity: (id: number) => void
+    decreaseQuantity: (id: number) => void
 }
 
 /* =======================
@@ -90,6 +96,26 @@ function cartReducer(state: CartState, action: CartAction): CartState {
         case "CLEAR_CART":
             return { cart: [] };
 
+        case "INCREASE_QUANTITY":
+            return {
+                ...state,
+                cart: state.cart.map((item) => (
+                    item.id === action.payload ?
+                        { ...item, quantity: Math.max(1, item.quantity + 1) }
+                        : item
+                )),
+            }
+
+        case "DECREASE_QUANTITY":
+            return {
+                ...state,
+                cart: state.cart.map((item) => (
+                    item.id == action.payload ?
+                        { ...item, quantity: Math.max(1, item.quantity - 1) }
+                        : item
+                )),
+            }
+
         case "LOAD_CART":
             return { cart: action.payload };
 
@@ -107,7 +133,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
 
     // Load from localStorage
     useEffect(() => {
-        const stored = localStorage.getItem("cart");
+        const stored = localStorage.getItem("grabCart");
         if (stored) {
             dispatch({ type: "LOAD_CART", payload: JSON.parse(stored) });
         }
@@ -115,20 +141,28 @@ export function CartProvider({ children }: { children: ReactNode }) {
 
     // Save to localStorage
     useEffect(() => {
-        localStorage.setItem("cart", JSON.stringify(state.cart));
+        localStorage.setItem("grabCart", JSON.stringify(state.cart));
     }, [state.cart]);
 
     const addToCart = (product: Product) => {
         dispatch({ type: "ADD_TO_CART", payload: product });
     };
 
-    const removeFromCart = (id: string) => {
+    const removeFromCart = (id: number) => {
         dispatch({ type: "REMOVE_FROM_CART", payload: id });
     };
 
     const clearCart = () => {
         dispatch({ type: "CLEAR_CART" });
     };
+
+    const increaseQuantity = (id: number) => {
+        dispatch({ type: "INCREASE_QUANTITY", payload: id })
+    }
+
+    const decreaseQuantity = (id: number) => {
+        dispatch({ type: "DECREASE_QUANTITY", payload: id })
+    }
 
     return (
         <CartContext.Provider
@@ -137,6 +171,8 @@ export function CartProvider({ children }: { children: ReactNode }) {
                 addToCart,
                 removeFromCart,
                 clearCart,
+                increaseQuantity,
+                decreaseQuantity,
             }}
         >
             {children}

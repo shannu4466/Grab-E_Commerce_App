@@ -9,8 +9,18 @@ import { CiStar } from "react-icons/ci";
 import { CiSearch } from "react-icons/ci";
 
 import { useAuth } from "@/context/AuthContext";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link"
+
+import {
+    Pagination,
+    PaginationContent,
+    PaginationEllipsis,
+    PaginationItem,
+    PaginationLink,
+    PaginationNext,
+    PaginationPrevious,
+} from "@/components/ui/pagination"
 
 type Product = {
     id: number
@@ -25,21 +35,29 @@ export default function Products() {
     const [searchProduct, setSearchProduct] = useState<string>("")
     const [authenticated, setAuthenticated] = useState<boolean>(false)
 
-    const { user } = useAuth()
+    const { user, loading } = useAuth()
     const router = useRouter()
 
+    const searchParams = useSearchParams()
+    const pageUrl = Number(searchParams.get("page")) || 1
+    const [currPage, setCurrPage] = useState<number>(pageUrl)
+
     useEffect(() => {
-        if (!user) {
+        router.push(`?page=${currPage}`)
+    }, [router, currPage])
+
+    useEffect(() => {
+        if (!user && !loading) {
             router.replace("/login")
-        } else {
+        } else if (!loading) {
             // eslint-disable-next-line react-hooks/set-state-in-effect
             setAuthenticated(true)
         }
-    }, [user, router])
+    }, [user, router, loading])
 
     useEffect(() => {
         const fetchProducts = async () => {
-            const res = await fetch("https://dummyjson.com/products?limit=52")
+            const res = await fetch("https://dummyjson.com/products?limit=100")
             const data = await res.json()
             setProducts(data.products)
         }
@@ -49,16 +67,21 @@ export default function Products() {
     if (!authenticated) {
         return null
     }
-console.log(products)
     const filteredProducts = products.filter((each) => {
         return (each.title.toLocaleLowerCase().includes(searchProduct.toLowerCase()))
     })
 
+    // pagination logic
+    const itemsPerPage = 10
+    const start = (currPage - 1) * itemsPerPage
+    const currItems = filteredProducts.slice(start, start + itemsPerPage)
+    const totalPages = Math.ceil(filteredProducts.length / itemsPerPage)
+
     return (
         <div className="bg-zinc-50 h-screen text-black flex flex-col" >
             <Sidebar />
-            <div className="ml-[10%] mt-[15%] md:mt-[5%] p-6 h-full">
-                <div className="flex justify-end mr-[10%] md:mr-[4%] mb-[2%]">
+            <div className="ml-[10%] mt-[15%] md:mt-[5%] p-6 h-full md:h-[90%]">
+                <div className="flex justify-end mr-[10%] md:mr-[4%] mb-[2%] ml-[8%]">
                     <div className="relative w-90">
                         <input
                             type="text"
@@ -78,8 +101,8 @@ console.log(products)
                         <p>Try adjusting your filters</p>
                     </div>
                     :
-                    <div className="flex flex-wrap gap-6 h-[70%] overflow-auto">
-                        {filteredProducts.map((eachProduct) => (
+                    <div className="flex flex-wrap gap-6 h-[70%] overflow-auto ml-[1%]">
+                        {currItems.map((eachProduct) => (
                             <div
                                 key={eachProduct.id}
                                 className="bg-white rounded-2xl shadow-md hover:shadow-xl transition duration-300 p-4 cursor-pointer w-37 md:w-75"
@@ -110,7 +133,80 @@ console.log(products)
                         ))}
                     </div>
                 }
+                {products && (
+                    <div className="flex justify-center items-center w-full overflow-auto">
+                        <Pagination className="mt-5">
+                            <PaginationContent>
+                                <PaginationItem>
+                                    <PaginationPrevious
+                                        href="#"
+                                        onClick={(e) => {
+                                            e.preventDefault();
+                                            if (currPage > 1) setCurrPage(currPage - 1);
+                                        }}
+                                        className={currPage === 1 ? "pointer-events-none opacity-50" : "cursor-pointer"}
+                                    />
+                                </PaginationItem>
+                                {generatePagination(currPage, totalPages).map((page, i) => (
+                                    <PaginationItem key={i}>
+                                        {page === "..." ? (
+                                            <PaginationEllipsis />
+                                        ) : (
+                                            <PaginationLink
+                                                href="#"
+                                                isActive={page === currPage}
+                                                onClick={(e) => {
+                                                    e.preventDefault();
+                                                    setCurrPage(Number(page));
+                                                }}
+                                                className="cursor-pointer"
+                                            >
+                                                {page}
+                                            </PaginationLink>
+                                        )}
+                                    </PaginationItem>
+                                ))}
+                                <PaginationItem>
+                                    <PaginationNext
+                                        href="#"
+                                        onClick={(e) => {
+                                            e.preventDefault();
+                                            if (currPage < totalPages) setCurrPage(currPage + 1);
+                                        }}
+                                        className={currPage === totalPages ? "pointer-events-none opacity-50" : "cursor-pointer"}
+                                    />
+                                </PaginationItem>
+                            </PaginationContent>
+                        </Pagination>
+                    </div>
+                )}
             </div>
+
         </div>
     )
+}
+
+function generatePagination(current: number, total: number) {
+    if (total <= 7) return Array.from({ length: total }, (_, i) => i + 1);
+
+    const pages: (number | string)[] = [];
+    pages.push(1);
+
+    if (current > 3) {
+        pages.push("...");
+    }
+
+    const start = Math.max(2, current - 1);
+    const end = Math.min(total - 1, current + 1);
+
+    for (let i = start; i <= end; i++) {
+        pages.push(i);
+    }
+
+    if (current < total - 2) {
+        pages.push("...");
+    }
+
+    pages.push(total);
+    return pages;
 }
