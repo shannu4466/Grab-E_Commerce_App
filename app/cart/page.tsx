@@ -109,7 +109,7 @@ export default function Cart() {
                                                 toast.success('Removed from cart', {
                                                     position: "top-right",
                                                     autoClose: 2000,
-                                                    hideProgressBar: false,
+                                                    hideProgressBar: true,
                                                     closeOnClick: false,
                                                     pauseOnHover: true,
                                                     draggable: true,
@@ -166,7 +166,7 @@ export default function Cart() {
                                     toast.info('Not implemented', {
                                         position: "top-right",
                                         autoClose: 2000,
-                                        hideProgressBar: false,
+                                        hideProgressBar: true,
                                         closeOnClick: false,
                                         pauseOnHover: true,
                                         draggable: true,

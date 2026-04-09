@@ -177,7 +177,7 @@ export default function Login() {
                             toast.info('Feature coming soon!', {
                                 position: "top-right",
                                 autoClose: 2000,
-                                hideProgressBar: false,
+                                hideProgressBar: true,
                                 closeOnClick: false,
                                 pauseOnHover: true,
                                 draggable: true,
