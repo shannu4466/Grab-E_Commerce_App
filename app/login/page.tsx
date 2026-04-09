@@ -1,5 +1,7 @@
 "use client";
 
+export const dynamic = "force-dynamic";
+
 import * as Label from "@radix-ui/react-label";
 import { Spinner } from '@radix-ui/themes'
 import { ToastContainer, toast } from 'react-toastify'
@@ -21,15 +23,17 @@ export default function Login() {
     const [authenticated, setAuthenticated] = useState<boolean>(true)
 
     const router = useRouter()
-    const searchParams = useSearchParams()
-    const redirect = searchParams.get("redirect") || "/"
+    const redirect =
+        typeof window !== "undefined"
+            ? new URLSearchParams(window.location.search).get("redirect") || "/"
+            : "/";
 
     const formik = useFormik({
         initialValues: {
             username: "",
             password: "",
         },
-        onSubmit: async (values) => {
+        onSubmit: async () => {
             setLoading(true)
             try {
                 const res = await fetch('https://dummyjson.com/auth/login', {
@@ -50,7 +54,7 @@ export default function Login() {
                     setError(data.message || "Invalid Credentials")
                     return
                 }
-                localStorage.setItem("grabToken", data.accessToken)
+                // localStorage.setItem("grabToken", data.accessToken)
                 await new Promise(r => setTimeout(r, 800))
                 router.replace("/")
             } catch (e: unknown) {
@@ -76,7 +80,11 @@ export default function Login() {
 
     return (
         <div className="flex flex-col md:flex-row w-full min-h-screen">
-            <ToastContainer />
+            <ToastContainer
+                toastClassName={() =>
+                    "bg-blue-950 text-white rounded-lg px-4 py-3 w-60 flex items-center justify-start"
+                }
+            />
             <div className="hidden md:flex w-1/2 items-center justify-center bg-blue-50">
                 <Image
                     src={LoginAppLogo}
