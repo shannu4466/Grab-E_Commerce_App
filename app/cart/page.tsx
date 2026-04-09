@@ -64,9 +64,9 @@ export default function Cart() {
                                                 height={70}
                                                 width={70}
                                                 loading="eager"
-                                                className="object-cover rounded shrink-0"
+                                                className="object-cover rounded shrink-0 h-40 w-40"
                                             />
-                                            <h1 className="text-sm sm:text-md md:text-lg font-bold text-blue-950 line-clamp-2">
+                                            <h1 className="text-xl sm:text-md md:text-lg font-bold text-blue-950 line-clamp-2">
                                                 {product.title}
                                             </h1>
                                         </div>
@@ -96,8 +96,8 @@ export default function Cart() {
                                                 +
                                             </button>
                                         </div>
-                                        <div className="flex flex-col justify-around items-center">
-                                            <p className="text-sm line-through text-gray-400">${product.price * product.quantity}</p>
+                                        <div className="flex flex-col justify-center items-center">
+                                            <p className="text-sm line-through text-gray-400">${(product.price * product.quantity).toFixed(2)}</p>
                                             <p className="text-base sm:text-lg font-bold text-blue-950 text-right min-w-17.5">
                                                 ${roundedPrice}
                                             </p>
