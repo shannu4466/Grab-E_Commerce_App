@@ -93,7 +93,7 @@ export default function Sidebar() {
                 </AlertDialog.Root>
             )}
 
-            <div className="h-full w-[10%] mt-[10%] md:mt-[4%] ml-[0%] p-8  md:ml-0 flex flex-col justify-center items-center fixed bg-gray-100">
+            <div className="h-full w-[10%] mt-[16%] md:mt-[4%] ml-[0%] p-8  md:ml-0 flex flex-col justify-center items-center fixed bg-gray-100">
                 <Link href="/">
                     <div className={`text-blue-950 mb-8 mt-8 cursor-pointer ${path.slice(1,) === '' ? "bg-orange-400 rounded-4xl p-2" : ""}`}>
                         <IoHomeOutline size={30} />

@@ -10,7 +10,7 @@ export default function Profile() {
     return (
         <div>
             <Sidebar />
-            <div className="ml-[10%] mt-[10%] p-6 h-full md:mt-[5%]">
+            <div className="ml-[10%] mt-[20%] p-6 h-full md:mt-[5%]">
                 <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-blue-950">Profile</h1>
                 <div className="flex flex-col md:flex-row items-center mt-[10%]">
                     <div className="border rounded-[50%] p-5 mr-10">
