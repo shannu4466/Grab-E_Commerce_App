@@ -122,7 +122,7 @@ export default function SingleProduct() {
                 </div>
                 <div className="flex flex-col w-full p-10 md:w-[50%] ml-[2%] md:ml-0">
                     <h1 className="text-3xl font-bold text-blue-950 mb-1">{product.title}</h1>
-                    <p className="italic text-sm flex items-center mb-2"><LuTags size={16} className="mr-2" />{product.brand}</p>
+                    <p className="italic text-sm flex items-center mb-2"><LuTags size={16} className="mr-2" />{product.brand || "Company not mentioned"}</p>
                     <div className="flex justify-between items-center mr-[15%] mb-2">
                         <p className={`${product.availabilityStatus === 'In Stock' ? "text-green-700" : "text-red-500"} font-bold`}>{product.availabilityStatus}</p>
                         <p className="text-sm bg-green-700 text-white px-2 py-1 rounded-md flex items-center w-18">

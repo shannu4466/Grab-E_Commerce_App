@@ -83,7 +83,11 @@ function cartReducer(state: CartState, action: CartAction): CartState {
 
             return {
                 ...state,
-                cart: [...state.cart, { ...action.payload, quantity: 1 }],
+                cart: [...state.cart, {
+                    images: [],
+                    discountPercentage: 0,
+                    ...action.payload, quantity: 1,
+                }],
             };
         }
 
