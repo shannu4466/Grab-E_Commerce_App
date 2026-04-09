@@ -6,6 +6,7 @@ import { IoHomeOutline } from "react-icons/io5";
 import { MdOutlineShoppingBag } from "react-icons/md";
 import { FiShoppingCart } from "react-icons/fi";
 import { CgProfile } from "react-icons/cg";
+import { CiUser } from "react-icons/ci";
 
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
@@ -20,7 +21,7 @@ import { useState } from "react";
 export default function Sidebar() {
     const [openDialog, setOpenDialog] = useState(false)
 
-    const { logout } = useAuth()
+    const { user, logout } = useAuth()
     const router = useRouter()
     const path = usePathname()
 
@@ -33,8 +34,8 @@ export default function Sidebar() {
     }
     return (
         <div className="flex flex-col bg-zinc-50 font-sans">
-            <div className="flex justify-between items-center h-[10%] w-full fixed mb-[10%] bg-gray-100">
-                <Link className="h-25 w-40 -ml-11.25 md:-ml-3" href="/">
+            <div className="flex justify-between items-center h-[10%] w-full fixed mb-[10%] bg-gray-100 border-red-600">
+                <Link className="h-25 w-40 -ml-11.25 md:-ml-3 flex items-center" href="/">
                     <Image
                         src={homepageLogoBgRemover}
                         alt="logo"
@@ -42,10 +43,18 @@ export default function Sidebar() {
                         height={100}
                         className="object-contain h-[80%] w-auto"
                     />
+                    <h1 className="text-blue-950 text-4xl font-bold ml-[-26%]">Grab</h1>
                 </Link>
-                <button className="cursor-pointer p-2 mr-10">
-                    <CiLogout onClick={() => setOpenDialog(true)} size={24} className="text-blue-950" />
-                </button>
+                <div className="flex items-center justify-between -mr-10 md:w-[20%] md:mr-0">
+                    <div className="flex justify-end items-center w-full mr-10">
+                        <CiUser size={18} className="text-blue-950" />
+                        <h1 className="font-bold text-blue-950 italic ml-2">Hi...{user?.username}</h1>
+                    </div>
+
+                    <button className="cursor-pointer p-2 mr-10 hover:bg-orange-400 hover:rounded-4xl">
+                        <CiLogout onClick={() => setOpenDialog(true)} size={24} className="text-blue-950 hover:text-black" />
+                    </button>
+                </div>
             </div>
 
             {/* logout confirmation */}
@@ -98,7 +107,7 @@ export default function Sidebar() {
                 <Link href="/cart">
                     <div className={`relative text-blue-950 mb-8 mt-8 cursor-pointer ${path.slice(1,) === 'cart' ? "bg-orange-400 rounded-4xl p-2" : ""}`}>
                         <FiShoppingCart size={30} />
-                        {cartCount >= 0 && (
+                        {cartCount > 0 && (
                             <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs font-bold min-w-4.5 h-4.5 flex items-center justify-center rounded-full">
                                 {cartCount}
                             </span>

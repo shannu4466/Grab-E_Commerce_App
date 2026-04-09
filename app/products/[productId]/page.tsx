@@ -14,7 +14,6 @@ import { FiShoppingCart } from "react-icons/fi";
 import { MdOutlinePolicy } from "react-icons/md";
 import { GiConfirmed } from "react-icons/gi";
 import { useCart } from '@/context/CartContext'
-import { useAuth } from "@/context/AuthContext";
 
 type Product = {
     returnPolicy: string
@@ -32,26 +31,15 @@ type Product = {
 
 export default function SingleProduct() {
     const [product, setProduct] = useState<Product | null>(null)
-    const [authenticated, setAuthenticated] = useState<boolean>(false)
     const [alreadtInCart, setAlreadyInCart] = useState<boolean>(false)
     const [currentProductQuantity, setCurrentProductQuantity] = useState<number>(0)
 
     const params = useParams()
-    const id = params.productId as unknown as number
+    const id = Number(params.productId)
 
     const router = useRouter()
 
     const { addToCart, cart, increaseQuantity, decreaseQuantity, removeFromCart } = useCart()
-    const { user, loading } = useAuth()
-
-    useEffect(() => {
-        if (!user && !loading) {
-            router.replace("/login")
-        } else if (!loading) {
-            // eslint-disable-next-line react-hooks/set-state-in-effect
-            setAuthenticated(true)
-        }
-    }, [user, router, loading])
 
     useEffect(() => {
         const fetchProductDetails = () => {
@@ -67,16 +55,14 @@ export default function SingleProduct() {
 
     useEffect(() => {
         const fetchProduct = async () => {
-            const res = await fetch(`https://dummyjson.com/products/${id}`)
+            const res = await fetch(`https://dummyjson.com/products/${id}`, {
+                cache: "no-store",
+            })
             const data = await res.json()
             setProduct(data)
         }
         fetchProduct()
     }, [id])
-
-    if (!authenticated) {
-        return null
-    }
 
     if (!product) {
         return (
@@ -87,26 +73,28 @@ export default function SingleProduct() {
     }
 
     const discount = product?.discountPercentage
-    const discountPrice = (discount / product.price) * 100
-    const roundedDiscount = discountPrice.toFixed(2)
+    const discountPrice = (discount / 100) * product.price
+    const roundedDiscount = Number(discountPrice.toFixed(2))
     const afterDiscountPrice = (product?.price - roundedDiscount)
+    const savedAmount = product.price - afterDiscountPrice
 
     return (
         <div className="flex flex-col items-center md:flex md:flex-row md:justify-between mt-0">
             <ToastContainer
                 toastClassName={() =>
-                    "bg-blue-950 text-white rounded-lg px-4 py-3 w-50"
+                    "bg-blue-950 text-white rounded-lg px-4 py-3 w-60 flex items-center justify-start"
                 }
             />
-            <div className="w-full md:h-screen md:w-0 p-10 cursor-pointer">
+            <div className="w-full md:h-screen md:w-0 p-10">
                 <button onClick={() => router.back()} className="w-20"><IoMdArrowRoundBack size={24} className="text-blue-950 cursor-pointer" /></button>
             </div>
             <div className="w-full md:w-[50%] h-full">
                 <Image
-                    src={product.images[0] || "/placeholder.png"}
+                    src={product?.images[0]}
                     alt="productImage"
                     height={500}
                     width={500}
+                    loading="eager"
                     className="object-contain h-full w-full hover:scale-105 transition duration-300"
                 />
             </div>
@@ -125,12 +113,21 @@ export default function SingleProduct() {
                 <div className="flex">
                     <h1 className="text-xl font-bold mb-2">$</h1>
                     <h1 className="text-xl font-bold mb-2 line-through mr-2 text-gray-400">{product.price}</h1>
-                    <h1 className="text-xl font-bold mb-2">{afterDiscountPrice}</h1>
+                    <h1 className="text-xl font-bold mb-2">{afterDiscountPrice.toFixed(2)}</h1>
                 </div>
+                <p className="text-sm text-green-600 font-semibold italic mb-2"> {discount > 1 ? Math.ceil(discount) : discount}% discount applied. You can save ${savedAmount.toFixed(2)} on this order</p>
                 {alreadtInCart ?
                     <div className="flex">
-                        <div className="bg-blue-950 text-white w-40 p-2 rounded-xl flex items-center justify-around mt-2 cursor-pointer">
-                            <button onClick={() => decreaseQuantity(product.id)} className="text-xl font-bold px-2 cursor-pointer">-</button>
+                        <div className="bg-blue-950 text-white w-40 p-2 rounded-xl flex items-center justify-around mt-2">
+                            <button onClick={() => {
+                                console.log("Decreased")
+                                decreaseQuantity(product.id)
+                            }}
+                                disabled={currentProductQuantity === 1}
+                                className="text-xl font-bold px-2 disabled:cursor-not-allowed disabled:opacity-50 cursor-pointer"
+                            >
+                                -
+                            </button>
                             <span className="flex items-center justify-center w-8 h-8 text-blue-950 bg-white rounded-full text-sm">
                                 {currentProductQuantity}
                             </span>
@@ -139,7 +136,7 @@ export default function SingleProduct() {
                         <button onClick={() => {
                             removeFromCart(product.id)
                             setAlreadyInCart(false)
-                            toast.success("Item removed", {
+                            toast.success("Removed from cart", {
                                 position: "top-right",
                                 autoClose: 2000,
                                 hideProgressBar: false,

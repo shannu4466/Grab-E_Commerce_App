@@ -8,7 +8,6 @@ import noProducts from "../../public/noProducts.png"
 import { CiStar } from "react-icons/ci";
 import { CiSearch } from "react-icons/ci";
 
-import { useAuth } from "@/context/AuthContext";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link"
 
@@ -33,9 +32,7 @@ type Product = {
 export default function Products() {
     const [products, setProducts] = useState<Product[]>([])
     const [searchProduct, setSearchProduct] = useState<string>("")
-    const [authenticated, setAuthenticated] = useState<boolean>(false)
 
-    const { user, loading } = useAuth()
     const router = useRouter()
 
     const searchParams = useSearchParams()
@@ -47,15 +44,6 @@ export default function Products() {
     }, [router, currPage])
 
     useEffect(() => {
-        if (!user && !loading) {
-            router.replace("/login")
-        } else if (!loading) {
-            // eslint-disable-next-line react-hooks/set-state-in-effect
-            setAuthenticated(true)
-        }
-    }, [user, router, loading])
-
-    useEffect(() => {
         const fetchProducts = async () => {
             const res = await fetch("https://dummyjson.com/products?limit=100")
             const data = await res.json()
@@ -64,9 +52,6 @@ export default function Products() {
         fetchProducts()
     }, [])
 
-    if (!authenticated) {
-        return null
-    }
     const filteredProducts = products.filter((each) => {
         return (each.title.toLocaleLowerCase().includes(searchProduct.toLowerCase()))
     })
@@ -133,7 +118,7 @@ export default function Products() {
                         ))}
                     </div>
                 }
-                {products && (
+                {filteredProducts.length !== 0 && (
                     <div className="flex justify-center items-center w-full overflow-auto">
                         <Pagination className="mt-5">
                             <PaginationContent>

@@ -10,7 +10,7 @@ import LoginAppLogo from '../../public/LoginAppLogo.png'
 import { IoEyeOutline } from "react-icons/io5";
 import { FaRegEyeSlash } from "react-icons/fa";
 import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
 
 export default function Login() {
@@ -21,6 +21,8 @@ export default function Login() {
     const [authenticated, setAuthenticated] = useState<boolean>(true)
 
     const router = useRouter()
+    const searchParams = useSearchParams()
+    const redirect = searchParams.get("redirect") || "/"
 
     const formik = useFormik({
         initialValues: {
@@ -62,11 +64,11 @@ export default function Login() {
     useEffect(() => {
         const isUserAlreadyLogin = Boolean(localStorage.getItem("grabToken"))
         if (isUserAlreadyLogin) {
-            router.replace("/")
+            router.replace(redirect)
         } else {
             setAuthenticated(false)
         }
-    }, [router])
+    }, [router, redirect])
 
     if (authenticated) {
         return <div className="min-h-screen bg-white" />;

@@ -6,13 +6,16 @@ interface User {
     id: string;
     username: string;
     email: string;
-    image?: string;
+    image: string;
+    firstName?:string;
+    lastName?:string;
+    gender?:string;
 }
 interface AuthContextType {
     user: User | null;
     setUser: (user: User | null) => void;
     logout: () => void;
-    loading : boolean;
+    loading: boolean;
 }
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
@@ -24,7 +27,9 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
             // eslint-disable-next-line react-hooks/set-state-in-effect
             setUser(JSON.parse(savedUser));
         }
-        setLoading(false)
+        setTimeout(() => {
+            setLoading(false)
+        }, 0)
     }, []);
     const logout = () => {
         localStorage.removeItem("grabToken");

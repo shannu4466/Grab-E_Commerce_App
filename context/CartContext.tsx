@@ -19,8 +19,8 @@ export interface Product {
 }
 
 export interface CartItem extends Product {
-    discountPercentage: any;
-    images: any;
+    images: string[];
+    discountPercentage: number;
     quantity: number;
 }
 
@@ -101,7 +101,7 @@ function cartReducer(state: CartState, action: CartAction): CartState {
                 ...state,
                 cart: state.cart.map((item) => (
                     item.id === action.payload ?
-                        { ...item, quantity: Math.max(1, item.quantity + 1) }
+                        { ...item, quantity: Math.max(0, item.quantity + 1) }
                         : item
                 )),
             }
@@ -111,7 +111,7 @@ function cartReducer(state: CartState, action: CartAction): CartState {
                 ...state,
                 cart: state.cart.map((item) => (
                     item.id == action.payload ?
-                        { ...item, quantity: Math.max(1, item.quantity - 1) }
+                        { ...item, quantity: Math.max(0, item.quantity - 1) }
                         : item
                 )),
             }

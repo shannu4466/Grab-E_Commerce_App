@@ -2,10 +2,12 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono, Inter } from "next/font/google";
 import "./globals.css";
 import { AuthProvider } from "@/context/AuthContext";
-import { CartContext, CartProvider } from "@/context/CartContext"
+import { CartProvider } from "@/context/CartContext"
 import { cn } from "@/lib/utils";
 
-const inter = Inter({subsets:['latin'],variable:'--font-sans'});
+import ProtectedRoute from "@/components/ProtectedRoute";
+
+const inter = Inter({ subsets: ['latin'], variable: '--font-sans' });
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -35,7 +37,9 @@ export default function RootLayout({
       <body className="min-h-full flex flex-col">
         <AuthProvider>
           <CartProvider>
-            {children}
+            <ProtectedRoute>
+              {children}
+            </ProtectedRoute>
           </CartProvider>
         </AuthProvider>
       </body>
