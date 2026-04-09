@@ -112,7 +112,7 @@ export default function SingleProduct() {
                 </div>
                 <div className="w-full md:w-[50%] h-full">
                     <Image
-                        src={product?.images[0]}
+                        src={product?.images?.[0] || "/fallback.png"}
                         alt="productImage"
                         height={500}
                         width={500}
@@ -214,6 +214,7 @@ export default function SingleProduct() {
                 <div className="md:flex items-center flex-wrap">
                     {product.reviews.map((review: Review) => {
                         const ids = Object.keys(avatarImages)
+                        // eslint-disable-next-line react-hooks/purity
                         const randomId = Number(ids[Math.floor(Math.random() * ids.length)])
                         const reviewAvatar = avatarImages[randomId]
                         return (
