@@ -32,6 +32,10 @@ type Product = {
 export default function Products() {
     const [products, setProducts] = useState<Product[]>([])
     const [searchProduct, setSearchProduct] = useState<string>("")
+    const [categoryList, setCategoryList] = useState<string[]>([])
+    const [category, setCategory] = useState<string>("all-products")
+    const [sortedValue, setSortedValue] = useState<string>("asc")
+    const [filters, setFilters] = useState<boolean>(true)
 
     const router = useRouter()
 
@@ -40,17 +44,34 @@ export default function Products() {
     const [currPage, setCurrPage] = useState<number>(pageUrl)
 
     useEffect(() => {
-        router.push(`?page=${currPage}`)
-    }, [router, currPage])
+        router.push(`?page=${currPage}&category=${category}&sortBy=${sortedValue}`)
+    }, [router, currPage, category, sortedValue])
 
+    // category list fetching hoook
+    useEffect(() => {
+        const fetchCategoryList = async () => {
+            const res = await fetch("https://dummyjson.com/products/category-list")
+            const data = await res.json()
+            setCategoryList(data)
+        }
+        fetchCategoryList()
+    }, [])
+
+    // All products fetching hook
     useEffect(() => {
         const fetchProducts = async () => {
-            const res = await fetch("https://dummyjson.com/products?limit=100")
-            const data = await res.json()
-            setProducts(data.products)
+            if (category === "all-products") {
+                const res = await fetch(`https://dummyjson.com/products?limit=1000&sortBy=price&order=${sortedValue}`)
+                const data = await res.json()
+                setProducts(data.products)
+            } else {
+                const res = await fetch(`https://dummyjson.com/products/category/${category}/?limit=50&sortBy=price&order=${sortedValue}`)
+                const data = await res.json()
+                setProducts(data.products)
+            }
         }
         fetchProducts()
-    }, [])
+    }, [category, sortedValue])
 
     const filteredProducts = products.filter((each) => {
         return (each.title.toLocaleLowerCase().includes(searchProduct.toLowerCase()))
@@ -66,8 +87,44 @@ export default function Products() {
         <div className="bg-zinc-50 h-screen text-black flex flex-col" >
             <Sidebar />
             <div className="ml-[10%] mt-[15%] md:mt-[5%] p-6 h-full md:h-[90%]">
-                <div className="flex justify-end mr-[10%] md:mr-[4%] mb-[2%] ml-[8%]">
-                    <div className="relative w-90">
+                <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mx-4 sm:mx-6 md:mx-10 lg:mx-[8%] my-4">
+                    {/* <button
+                        onClick={() => setFilters(!filters)}
+                        className="text-blue-800 -mt-10 text-start md:mt-0 cursor-pointer"
+                    >{filters ? "Close filters" : "Click here for filters"}
+                    </button> */}
+                    {filters && (
+                        <div className="md:flex items-center justify-between">
+                            <div className="w-full md:w-auto">
+                                <label className="md:mr-3">Select Category</label>
+                                <select
+                                    className="w-full md:w-auto border h-10 px-3 rounded-md bg-white shadow-sm focus:outline-none focus:ring-1 focus:ring-blue-950 focus:border-blue-950 mr-10 mb-2 md:mb-0"
+                                    value={category}
+                                    onChange={(e) => {
+                                        setCategory(e.target.value)
+                                        setCurrPage(1)
+                                    }}
+                                >
+                                    <option value="all-products">All Categories</option>
+                                    {categoryList.map((category: string, idx: number) => (
+                                        <option key={idx} value={category}>{category}</option>
+                                    ))}
+                                </select>
+                            </div>
+                            <div>
+                                <label className="md:mr-3">Sort By</label>
+                                <select
+                                    onChange={(e) => setSortedValue(e.target.value)}
+                                    className="w-full md:w-auto border h-10 px-3 rounded-md bg-white shadow-sm focus:outline-none focus:ring-1 focus:ring-blue-950 focus:border-blue-950"
+                                    value={sortedValue}
+                                >
+                                    <option value="asc">Low to high</option>
+                                    <option value="desc">High to low</option>
+                                </select>
+                            </div>
+                        </div>
+                    )}
+                    <div className="relative w-full md:w-80 lg:w-96">
                         <input
                             type="text"
                             placeholder="Search products..."

@@ -46,9 +46,9 @@ export default function Sidebar() {
                     <h1 className="text-blue-950 text-4xl font-bold ml-[-26%]">Grab</h1>
                 </Link>
                 <div className="flex items-center justify-between -mr-10 md:w-[20%] md:mr-0">
-                    <div className="flex justify-end items-center w-full mr-10">
+                    <div className="flex justify-end items-center w-full mr-10">    
                         <CiUser size={18} className="text-blue-950" />
-                        <h1 className="font-bold text-blue-950 italic ml-2">Hi...{user?.username}</h1>
+                        <h1 className="font-bold text-blue-950 italic ml-2">Hi...{user?.firstName} {user?.lastName}</h1>
                     </div>
 
                     <button className="cursor-pointer p-2 mr-10 hover:bg-orange-400 hover:rounded-4xl">

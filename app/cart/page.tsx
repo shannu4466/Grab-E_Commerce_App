@@ -12,6 +12,8 @@ export default function Cart() {
     const { cart, increaseQuantity, decreaseQuantity, removeFromCart } = useCart()
 
     let totalCartValue = 0;
+    let totalCartPrice = 0;
+    let totalSaved = 0;
 
     return (
         <div>
@@ -45,6 +47,9 @@ export default function Cart() {
                             const cartItemProductPrice = afterDiscountPrice * product.quantity
                             const roundedPrice = cartItemProductPrice.toFixed(2)
                             totalCartValue += Number(roundedPrice)
+
+                            totalCartPrice += Number(product.price * product.quantity)
+                            totalSaved = (totalCartPrice - totalCartValue)
 
                             return (
                                 <div
@@ -91,9 +96,12 @@ export default function Cart() {
                                                 +
                                             </button>
                                         </div>
-                                        <p className="text-base sm:text-lg font-bold text-blue-950 text-right min-w-17.5">
-                                            ${roundedPrice}
-                                        </p>
+                                        <div className="flex flex-col justify-around items-center">
+                                            <p className="text-sm line-through text-gray-400">${product.price * product.quantity}</p>
+                                            <p className="text-base sm:text-lg font-bold text-blue-950 text-right min-w-17.5">
+                                                ${roundedPrice}
+                                            </p>
+                                        </div>
                                         <button
                                             className="bg-red-100 p-2 rounded-xl hover:bg-red-200 cursor-pointer"
                                             onClick={() => {
@@ -125,9 +133,32 @@ export default function Cart() {
                                 Cart Value
                             </h1>
 
-                            <h1 className="font-bold text-blue-950 text-xl sm:text-2xl mb-4">
-                                ${totalCartValue.toFixed(2)}
-                            </h1>
+                            <div className="flex items-center justify-between">
+                                <h1>Total price: </h1>
+                                <h1 className="font-bold text-blue-950 text-xl sm:text-xl">
+                                    ${totalCartPrice.toFixed(2)}
+                                </h1>
+                            </div>
+
+                            <div className="flex items-center justify-between mb-2">
+                                <h1>Discount: </h1>
+                                <h1 className="font-bold text-blue-950 text-xl sm:text-xl">
+                                    ${totalSaved.toFixed(2)}
+                                </h1>
+                            </div>
+
+                            <hr />
+
+                            <div className="flex items-center justify-between mt-2 mb-2">
+                                <h1>Final amount to be paid: </h1>
+                                <h1 className="font-bold text-blue-950 text-xl sm:text-xl">
+                                    ${totalCartValue.toFixed(2)}
+                                </h1>
+                            </div>
+
+                            <hr />
+
+                            <p className="text-green-500 italic mb-4">You saved upto total of <span className="font-bold">${totalSaved.toFixed(2)}</span></p>
 
                             <button
                                 className="w-full text-white bg-blue-950 rounded-xl py-2 sm:py-3 cursor-pointer"
