@@ -16,6 +16,7 @@ export interface Product {
     id: number;
     title: string;
     price: number;
+    minimumOrderQuantity: number;
 }
 
 export interface CartItem extends Product {
@@ -29,7 +30,7 @@ interface CartState {
 }
 
 type CartAction =
-    | { type: "ADD_TO_CART"; payload: Product }
+    | { type: "ADD_TO_CART"; payload: { product: Product, minimumQunatity: boolean } }
     | { type: "REMOVE_FROM_CART"; payload: number }
     | { type: "CLEAR_CART" }
     | { type: "LOAD_CART"; payload: CartItem[] }
@@ -42,7 +43,7 @@ type CartAction =
 
 interface CartContextType {
     cart: CartItem[];
-    addToCart: (product: Product) => void;
+    addToCart: (product: Product, minimumOrderQuantity: number) => void;
     removeFromCart: (id: number) => void;
     clearCart: () => void;
     increaseQuantity: (id: number) => void
@@ -66,15 +67,17 @@ const initialState: CartState = {
 function cartReducer(state: CartState, action: CartAction): CartState {
     switch (action.type) {
         case "ADD_TO_CART": {
+            const { product, minimumOrderQuantity } = action.payload
+
             const existingItem = state.cart.find(
-                (item) => item.id === action.payload.id
+                (item) => item.id === product.id
             );
 
             if (existingItem) {
                 return {
                     ...state,
                     cart: state.cart.map((item) =>
-                        item.id === action.payload.id
+                        item.id === product.id
                             ? { ...item, quantity: item.quantity + 1 }
                             : item
                     ),
@@ -86,7 +89,7 @@ function cartReducer(state: CartState, action: CartAction): CartState {
                 cart: [...state.cart, {
                     images: [],
                     discountPercentage: 0,
-                    ...action.payload, quantity: 1,
+                    ...product, quantity: minimumOrderQuantity,
                 }],
             };
         }
@@ -148,8 +151,8 @@ export function CartProvider({ children }: { children: ReactNode }) {
         localStorage.setItem("grabCart", JSON.stringify(state.cart));
     }, [state.cart]);
 
-    const addToCart = (product: Product) => {
-        dispatch({ type: "ADD_TO_CART", payload: product });
+    const addToCart = (product: Product, minimumOrderQuantity: number) => {
+        dispatch({ type: "ADD_TO_CART", payload: { product, minimumOrderQuantity } });
     };
 
     const removeFromCart = (id: number) => {

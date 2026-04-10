@@ -5,6 +5,7 @@ import { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
 import Image from "next/image"
 import { ToastContainer, toast } from 'react-toastify'
+import Link from "next/link"
 
 import { MdOutlineLocalShipping } from "react-icons/md";
 import { IoMdArrowRoundBack } from "react-icons/io";
@@ -15,6 +16,8 @@ import { MdOutlinePolicy } from "react-icons/md";
 import { GiConfirmed } from "react-icons/gi";
 import { MdOutlineRateReview } from "react-icons/md";
 import { LuTags } from "react-icons/lu";
+import { HiSquare3Stack3D } from "react-icons/hi2";
+import { FiPackage } from "react-icons/fi";
 
 import { useCart } from '@/context/CartContext'
 import Sidebar from "@/components/sidebar"
@@ -41,6 +44,8 @@ type Product = {
     warrantyInformation?: string
     reviews: Review[]
     brand: string
+    category: string
+    minimumOrderQuantity: number
 }
 
 const avatarImages = [
@@ -53,6 +58,7 @@ export default function EachProductClient() {
     const [product, setProduct] = useState<Product | null>(null)
     const [alreadtInCart, setAlreadyInCart] = useState<boolean>(false)
     const [currentProductQuantity, setCurrentProductQuantity] = useState<number>(0)
+    const [similarProducts, setSimilarProducts] = useState<Product[]>([])
 
     const params = useParams()
     const id = Number(params.productId)
@@ -84,6 +90,16 @@ export default function EachProductClient() {
         fetchProduct()
     }, [id])
 
+    // get similar products api call
+    useEffect(() => {
+        const fetchSimilarProducts = async () => {
+            const res = await fetch(`https://dummyjson.com/products/category/${product?.category}?limit=4`)
+            const data = await res.json()
+            setSimilarProducts(data.products)
+        }
+        fetchSimilarProducts()
+    }, [product])
+
     if (!product) {
         return (
             <div className="flex flex-col justify-center items-center h-screen">
@@ -104,7 +120,7 @@ export default function EachProductClient() {
             <div className="flex flex-col items-center md:flex md:flex-row md:justify-between mt-[10%] md:-[10%]">
                 <ToastContainer
                     toastClassName={() =>
-                        "bg-blue-950 text-white rounded-lg px-4 py-3 w-60 flex items-center justify-start"
+                        "bg-blue-950 text-white rounded-lg px-4 py-3 w-60 flex items-center justify-start mt-[20%] md:mt-[25%]"
                     }
                 />
                 <div className="w-full md:h-screen md:w-0 p-10 md:ml-[5%] md:-mt-[10%]">
@@ -133,6 +149,7 @@ export default function EachProductClient() {
                     <p className="flex items-center mb-2"><MdOutlineLocalShipping size={18} className="mr-3" />{product.shippingInformation}</p>
                     <p className="flex items-center mb-2"><GiConfirmed size={18} className="mr-3" />{product.warrantyInformation}</p>
                     <p className="flex items-center mb-2"><MdOutlinePolicy size={18} className="mr-3" />{product.returnPolicy}</p>
+                    <p className="flex items-center mb-2"><FiPackage size={18} className="mr-3" />Minimum order quantity - {product.minimumOrderQuantity}</p>
                     <div className="flex">
                         <h1 className="text-xl font-bold mb-2 mr-4 ml-1">$</h1>
                         <h1 className="text-xl font-bold mb-2 line-through mr-2 text-gray-400">{product.price}</h1>
@@ -145,7 +162,7 @@ export default function EachProductClient() {
                                 <button onClick={() => {
                                     decreaseQuantity(product.id)
                                 }}
-                                    disabled={currentProductQuantity === 1}
+                                    disabled={currentProductQuantity === product.minimumOrderQuantity}
                                     className="text-xl font-bold px-2 disabled:cursor-not-allowed disabled:opacity-50 cursor-pointer"
                                 >
                                     -
@@ -187,7 +204,7 @@ export default function EachProductClient() {
                         <button
                             className="bg-blue-950 text-white w-40 p-2 rounded-xl flex items-center justify-around mt-2 cursor-pointer"
                             onClick={() => {
-                                addToCart(product)
+                                addToCart(product, product.minimumOrderQuantity)
                                 toast.success('Added to cart', {
                                     position: "top-right",
                                     autoClose: 2000,
@@ -245,6 +262,40 @@ export default function EachProductClient() {
                         )
                     })}
                 </div>
+            </div>
+            <h1 className="text-blue-950 font-bold text-2xl ml-[7%] md:ml-[12%] flex items-center justify-start"><HiSquare3Stack3D size={24} className="mr-3" />Similar products</h1>
+            <div className="m-5 md:ml-[12%] mb-[20%] md:mb-3 flex flex-wrap items-center justify-center md:justify-start">
+                {similarProducts.map((eachSimilarProduct: Product) => {
+                    return (
+                        <div
+                            key={eachSimilarProduct.id}
+                            className="bg-white rounded-2xl shadow-md hover:shadow-xl transition duration-300 p-4 cursor-pointer w-37 md:w-75 m-2"
+                        >
+                            <Link href={`/products/${eachSimilarProduct.id}`}>
+                                <div className="w-full h-45 flex items-center justify-center overflow-hidden rounded-xl bg-zinc-100">
+                                    <Image
+                                        src={eachSimilarProduct.images?.[0] || "/product.png"}
+                                        alt="productImage"
+                                        width={150}
+                                        height={150}
+                                        className="object-contain h-full w-full hover:scale-105 transition duration-300"
+                                    />
+                                </div>
+                                <h1 className="mt-3 text-sm font-semibold text-gray-800 line-clamp-2">
+                                    {eachSimilarProduct.title}
+                                </h1>
+                                <div className="flex flex-col md:flex md:flex-row justify-between items-center mt-3">
+                                    <h3 className="text-lg font-bold text-blue-950">
+                                        ${eachSimilarProduct.price}
+                                    </h3>
+                                    <p className="text-sm bg-green-800 text-white px-2 py-1 rounded-md flex items-center">
+                                        <CiStar size={18} className="mr-1" /> {eachSimilarProduct.rating}
+                                    </p>
+                                </div>
+                            </Link>
+                        </div>
+                    )
+                })}
             </div>
         </div>
     )
