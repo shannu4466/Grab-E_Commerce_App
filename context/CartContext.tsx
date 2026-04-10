@@ -30,7 +30,7 @@ interface CartState {
 }
 
 type CartAction =
-    | { type: "ADD_TO_CART"; payload: { product: Product, minimumQunatity: boolean } }
+    | { type: "ADD_TO_CART"; payload: { product: Product, minimumOrderQuantity: number } }
     | { type: "REMOVE_FROM_CART"; payload: number }
     | { type: "CLEAR_CART" }
     | { type: "LOAD_CART"; payload: CartItem[] }

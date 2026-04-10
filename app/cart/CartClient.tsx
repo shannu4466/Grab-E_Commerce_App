@@ -86,7 +86,7 @@ export default function CartClient() {
                                                     {product.title}
                                                 </h1>
                                             </div>
-                                            <div className="sm:block hidden">
+                                            <div className="sm:block hidden" onClick={(e) => e.stopPropagation()}>
                                                 {product.quantity < product.minimumOrderQuantity && (
                                                     <p className="text-sm text-red-600 font-semibold">Minimum order should be {product.minimumOrderQuantity}</p>
                                                 )}
