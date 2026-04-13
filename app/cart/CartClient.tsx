@@ -8,16 +8,31 @@ import Head from "next/head"
 
 import { MdDeleteOutline } from "react-icons/md";
 import { ToastContainer, toast } from 'react-toastify'
-import { useEffect, useState } from "react"
+import { useEffect, useState, useMemo } from "react"
 
 export default function CartClient() {
     const [quantityError, setQuantityError] = useState<boolean>(false)
 
     const { cart, increaseQuantity, decreaseQuantity, removeFromCart } = useCart()
 
-    let totalCartValue = 0;
-    let totalCartPrice = 0;
-    let totalSaved = 0;
+    const { totalCartValue, totalCartPrice, totalSaved } = useMemo(() => {
+        let totalCartValue = 0;
+        let totalCartPrice = 0;
+
+        cart.forEach(product => {
+            const discount = product.discountPercentage;
+            const discountPrice = (discount / 100) * product.price;
+            const roundedDiscount = Number(discountPrice.toFixed(2));
+            const afterDiscountPrice = product.price - roundedDiscount;
+
+            totalCartValue += afterDiscountPrice * product.quantity;
+            totalCartPrice += product.price * product.quantity;
+        });
+
+        const totalSaved = totalCartPrice - totalCartValue;
+
+        return { totalCartValue, totalCartPrice, totalSaved };
+    }, [cart]);
 
     useEffect(() => {
         const hasError = cart.some(
@@ -55,16 +70,11 @@ export default function CartClient() {
                         </div>
                     ) : (
                         cart.map(product => {
-                            const discount = product.discountPercentage
-                            const discountPrice = (discount / 100) * product.price
-                            const roundedDiscount = Number(discountPrice.toFixed(2))
-                            const afterDiscountPrice = product.price - roundedDiscount
-                            const cartItemProductPrice = afterDiscountPrice * product.quantity
-                            const roundedPrice = cartItemProductPrice.toFixed(2)
-                            totalCartValue += Number(roundedPrice)
-
-                            totalCartPrice += Number(product.price * product.quantity)
-                            totalSaved = (totalCartPrice - totalCartValue)
+                            const discount = product.discountPercentage;
+                            const discountPrice = (discount / 100) * product.price;
+                            const roundedDiscount = Number(discountPrice.toFixed(2));
+                            const afterDiscountPrice = product.price - roundedDiscount;
+                            const roundedPrice = Number(afterDiscountPrice.toFixed(2));
 
                             return (
                                 <div
@@ -86,13 +96,18 @@ export default function CartClient() {
                                                     {product.title}
                                                 </h1>
                                             </div>
-                                            <div className="sm:block hidden" onClick={(e) => e.stopPropagation()}>
+                                            <div className="sm:block hidden cursor-text w-full"
+                                                onClick={(e) => {
+                                                    e.stopPropagation()
+                                                    e.preventDefault()
+                                                }}>
                                                 {product.quantity < product.minimumOrderQuantity && (
                                                     <p className="text-sm text-red-600 font-semibold">Minimum order should be {product.minimumOrderQuantity}</p>
                                                 )}
                                             </div>
                                         </div>
                                     </Link>
+
                                     <div className="flex flex-wrap sm:flex-nowrap items-center justify-between w-full sm:w-auto gap-3 sm:gap-6">
                                         <div className="flex items-center gap-2 bg-gray-100 px-3 py-1 rounded-full border">
                                             <button
@@ -118,10 +133,10 @@ export default function CartClient() {
                                                 +
                                             </button>
                                         </div>
-                                        <div className="flex flex-col justify-center items-center">
+                                        <div className="flex flex-col justify-start items-center">
                                             <p className="text-sm line-through text-gray-400">${(product.price * product.quantity).toFixed(2)}</p>
                                             <p className="text-base sm:text-lg font-bold text-blue-950 text-right min-w-17.5">
-                                                ${roundedPrice}
+                                                ${(roundedPrice * product.quantity).toFixed(2)}
                                             </p>
                                         </div>
                                         <button
@@ -201,7 +216,6 @@ export default function CartClient() {
                         </div>
                     </div>
                 )}
-
             </div>
         </div>
     )

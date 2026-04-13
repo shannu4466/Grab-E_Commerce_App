@@ -11,6 +11,11 @@ import { CiSearch } from "react-icons/ci";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link"
 
+import { Select } from "radix-ui"
+import classnames from "classnames"
+
+import { useFetch } from "@/hooks/useFetch"
+
 import {
     Pagination,
     PaginationContent,
@@ -20,6 +25,7 @@ import {
     PaginationNext,
     PaginationPrevious,
 } from "@/components/ui/pagination"
+import { ChevronDownIcon, ChevronUpIcon } from "lucide-react"
 
 type Product = {
     id: number
@@ -29,13 +35,17 @@ type Product = {
     rating: number
 }
 
+type ProductsResponse = {
+    products: Product[]
+    total: number
+    skip: number
+    limit: number
+}
+
 export default function ProductsClient() {
-    const [products, setProducts] = useState<Product[]>([])
     const [searchProduct, setSearchProduct] = useState<string>("")
-    const [categoryList, setCategoryList] = useState<string[]>([])
     const [category, setCategory] = useState<string>("all-products")
     const [sortedValue, setSortedValue] = useState<string>("asc")
-    const [filters, setFilters] = useState<boolean>(true)
 
     const router = useRouter()
 
@@ -43,37 +53,18 @@ export default function ProductsClient() {
     const pageUrl = Number(searchParams.get("page")) || 1
     const [currPage, setCurrPage] = useState<number>(pageUrl)
 
-
-
     useEffect(() => {
         router.push(`?page=${currPage}&category=${category}&sortBy=${sortedValue}`)
     }, [router, currPage, category, sortedValue])
 
-    // category list fetching hoook
-    useEffect(() => {
-        const fetchCategoryList = async () => {
-            const res = await fetch("https://dummyjson.com/products/category-list")
-            const data = await res.json()
-            setCategoryList(data)
-        }
-        fetchCategoryList()
-    }, [])
+    const { apiData: categoryList } = useFetch<string[]>("https://dummyjson.com/products/category-list")
 
-    // All products fetching hook
-    useEffect(() => {
-        const fetchProducts = async () => {
-            if (category === "all-products") {
-                const res = await fetch(`https://dummyjson.com/products?limit=1000&sortBy=price&order=${sortedValue}`)
-                const data = await res.json()
-                setProducts(data.products)
-            } else {
-                const res = await fetch(`https://dummyjson.com/products/category/${category}/?limit=50&sortBy=price&order=${sortedValue}`)
-                const data = await res.json()
-                setProducts(data.products)
-            }
-        }
-        fetchProducts()
-    }, [category, sortedValue])
+    const url = category === 'all-products' ?
+        `https://dummyjson.com/products?limit=1000&sortBy=price&order=${sortedValue}`
+        : `https://dummyjson.com/products/category/${category}/?limit=50&sortBy=price&order=${sortedValue}`
+
+    const { apiData: productResponse, loading } = useFetch<ProductsResponse>(url)
+    const products = productResponse?.products ?? []
 
     const filteredProducts = products.filter((each) => {
         return (each.title.toLocaleLowerCase().includes(searchProduct.toLowerCase()))
@@ -89,43 +80,106 @@ export default function ProductsClient() {
         <div className="bg-zinc-50 h-screen text-black flex flex-col" >
             <Sidebar />
             <div className="mt-[15%] md:mt-[5%] p-6 h-full md:h-[90%] md:ml-[5%]">
+                {loading && (
+                    <div className="flex flex-col justify-center items-center h-screen">
+                        <div className="w-6 h-6 border-2 border-gray-300 border-t-black rounded-full animate-spin" />
+                    </div>
+                )}
                 <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mx-4 sm:mx-6 md:mx-10 lg:mx-[8%] my-4">
-                    {/* <button
-                        onClick={() => setFilters(!filters)}
-                        className="text-blue-800 -mt-10 text-start md:mt-0 cursor-pointer"
-                    >{filters ? "Close filters" : "Click here for filters"}
-                    </button> */}
-                    {filters && (
-                        <div className="md:flex items-center justify-between">
-                            <div className="w-full md:w-auto">
-                                <label className="md:mr-3">Select Category</label>
-                                <select
-                                    className="w-full md:w-auto border h-10 px-3 rounded-md bg-white shadow-sm focus:outline-none focus:ring-1 focus:ring-blue-950 focus:border-blue-950 mr-10 mb-2 md:mb-0"
-                                    value={category}
-                                    onChange={(e) => {
-                                        setCategory(e.target.value)
-                                        setCurrPage(1)
-                                    }}
+                    <div className="md:flex items-center justify-between">
+                        <div className="w-full md:w-auto md:flex md:items-center">
+                            <label className="md:mr-3">Select category</label>
+                            <Select.Root
+                                value={category}
+                                onValueChange={(value) => {
+                                    setCategory(value)
+                                    setCurrPage(1)
+                                }}
+                            >
+                                <Select.Trigger
+                                    className="w-full md:w-auto border h-10 px-3 rounded-md bg-white shadow-sm focus:outline-none focus:ring-1 focus:ring-blue-950 focus:border-blue-950 mr-10 mb-2 md:mb-0 flex items-center justify-between cursor-pointer"
+                                    aria-label="Category"
                                 >
-                                    <option value="all-products">All Categories</option>
-                                    {categoryList.map((category: string, idx: number) => (
-                                        <option key={idx} value={category}>{category}</option>
-                                    ))}
-                                </select>
-                            </div>
-                            <div>
-                                <label className="md:mr-3">Sort By</label>
-                                <select
-                                    onChange={(e) => setSortedValue(e.target.value)}
-                                    className="w-full md:w-auto border h-10 px-3 rounded-md bg-white shadow-sm focus:outline-none focus:ring-1 focus:ring-blue-950 focus:border-blue-950"
-                                    value={sortedValue}
-                                >
-                                    <option value="asc">Low to high</option>
-                                    <option value="desc">High to low</option>
-                                </select>
-                            </div>
+                                    <Select.Value placeholder="Select category" />
+                                    <Select.Icon>
+                                        <ChevronDownIcon />
+                                    </Select.Icon>
+                                </Select.Trigger>
+
+                                <Select.Portal>
+                                    <Select.Content className="overflow-hidden rounded-md bg-white shadow-[0px_10px_38px_-10px_rgba(22,23,24,0.35),0px_10px_20px_-15px_rgba(22,23,24,0.2)]">
+
+                                        <Select.ScrollUpButton className="flex h-6.25 items-center justify-center bg-white">
+                                            <ChevronUpIcon />
+                                        </Select.ScrollUpButton>
+
+                                        <Select.Viewport className="p-1.25">
+                                            <Select.Group>
+                                                <Select.Item value="all-products" className="px-3 py-2 cursor-pointer">
+                                                    <Select.ItemText>All Categories</Select.ItemText>
+                                                </Select.Item>
+                                                {categoryList?.map((eachCategory: string, idx: number) => (
+                                                    <Select.Item
+                                                        key={idx}
+                                                        value={eachCategory}
+                                                        className="px-3 py-2 cursor-pointer"
+                                                    >
+                                                        <Select.ItemText>{eachCategory}</Select.ItemText>
+                                                    </Select.Item>
+                                                ))}
+
+                                            </Select.Group>
+                                        </Select.Viewport>
+
+                                    </Select.Content>
+                                </Select.Portal>
+                            </Select.Root>
                         </div>
-                    )}
+                        <div className="md:flex md:items-center justify-start">
+                            <label className="md:mr-3">Sort By</label>
+                            <Select.Root
+                                value={sortedValue}
+                                onValueChange={(value) => {
+                                    setSortedValue(value)
+                                    setCurrPage(1)
+                                }}
+                            >
+                                <Select.Trigger
+                                    className="w-full md:w-auto border h-10 px-3 rounded-md bg-white shadow-sm focus:outline-none focus:ring-1 focus:ring-blue-950 focus:border-blue-950 mr-10 mb-2 md:mb-0 flex items-center justify-between cursor-pointer"
+                                    aria-label="Sort By"
+                                >
+                                    <Select.Value placeholder="Sort by" />
+                                    <Select.Icon>
+                                        <ChevronDownIcon />
+                                    </Select.Icon>
+                                </Select.Trigger>
+
+                                <Select.Portal>
+                                    <Select.Content className="overflow-hidden rounded-md bg-white shadow-[0px_10px_38px_-10px_rgba(22,23,24,0.35),0px_10px_20px_-15px_rgba(22,23,24,0.2)]">
+
+                                        <Select.ScrollUpButton className="flex h-6.25 items-center justify-center bg-white">
+                                            <ChevronUpIcon />
+                                        </Select.ScrollUpButton>
+
+                                        <Select.Viewport className="p-1.25">
+                                            <Select.Group>
+
+                                                <Select.Item value="asc" className="px-3 py-2 cursor-pointer">
+                                                    <Select.ItemText>Low to high</Select.ItemText>
+                                                </Select.Item>
+
+                                                <Select.Item value="desc" className="px-3 py-2 cursor-pointer">
+                                                    <Select.ItemText>High to low</Select.ItemText>
+                                                </Select.Item>
+
+                                            </Select.Group>
+                                        </Select.Viewport>
+
+                                    </Select.Content>
+                                </Select.Portal>
+                            </Select.Root>
+                        </div>
+                    </div>
                     <div className="relative w-full md:w-80 lg:w-96">
                         <input
                             type="text"
@@ -145,7 +199,7 @@ export default function ProductsClient() {
                         <p>Try adjusting your filters</p>
                     </div>
                     :
-                    <div className="flex items-center justify-center flex-wrap gap-6 h-[70%] overflow-auto">
+                    <div className="flex items-center justify-center md:justify-start flex-wrap gap-6 h-[70%] overflow-auto">
                         {currItems.map((eachProduct) => (
                             <div
                                 key={eachProduct.id}

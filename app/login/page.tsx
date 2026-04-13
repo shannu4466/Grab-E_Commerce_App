@@ -54,7 +54,6 @@ export default function Login() {
                     setError(data.message || "Invalid Credentials")
                     return
                 }
-                // localStorage.setItem("grabToken", data.accessToken)
                 await new Promise(r => setTimeout(r, 800))
                 router.replace("/")
             } catch (e: unknown) {

@@ -1,7 +1,7 @@
 "use client"
 
 import { useParams } from "next/navigation"
-import { useEffect, useState } from "react"
+import { useEffect, useMemo, useState } from "react"
 import { useRouter } from "next/navigation"
 import Image from "next/image"
 import { ToastContainer, toast } from 'react-toastify'
@@ -23,6 +23,8 @@ import { useCart } from '@/context/CartContext'
 import Sidebar from "@/components/sidebar"
 
 import { Avatar } from "radix-ui"
+
+import { useFetch } from "@/hooks/useFetch"
 
 type Review = {
     reviewerName: string
@@ -48,6 +50,10 @@ type Product = {
     minimumOrderQuantity: number
 }
 
+type similarProductsResponse = {
+    products: Product[]
+}
+
 const avatarImages = [
     { id: 0, avatarUrl: "https://images.unsplash.com/photo-1492633423870-43d1cd2775eb?&w=128&h=128&dpr=2&q=80" },
     { id: 1, avatarUrl: "https://images.unsplash.com/photo-1511485977113-f34c92461ad9?ixlib=rb-1.2.1&w=128&h=128&dpr=2&q=80" },
@@ -55,10 +61,8 @@ const avatarImages = [
 ]
 
 export default function EachProductClient() {
-    const [product, setProduct] = useState<Product | null>(null)
     const [alreadtInCart, setAlreadyInCart] = useState<boolean>(false)
     const [currentProductQuantity, setCurrentProductQuantity] = useState<number>(0)
-    const [similarProducts, setSimilarProducts] = useState<Product[]>([])
 
     const params = useParams()
     const id = Number(params.productId)
@@ -66,6 +70,27 @@ export default function EachProductClient() {
     const router = useRouter()
 
     const { addToCart, cart, increaseQuantity, decreaseQuantity, removeFromCart } = useCart()
+
+    // Get current product information
+    const { apiData: product } = useFetch<Product>(`https://dummyjson.com/products/${id}`)
+
+    // calculate discount and saved amount of the current product
+    const { afterDiscountPrice, savedAmount, discount } = useMemo(() => {
+        if (!product || product.price == null) {
+            return {
+                afterDiscountPrice: 0,
+                savedAmount: 0,
+                discount: 0,
+            }
+        }
+        const discount = product.discountPercentage ?? 0
+        const discountPrice = (discount / 100) * product.price
+        const roundedDiscount = Number(discountPrice.toFixed(2))
+        const afterDiscountPrice = product.price - roundedDiscount
+        const savedAmount = product.price - afterDiscountPrice
+
+        return { afterDiscountPrice, savedAmount, discount }
+    }, [product])
 
     useEffect(() => {
         const fetchProductDetails = () => {
@@ -79,26 +104,9 @@ export default function EachProductClient() {
         fetchProductDetails()
     }, [id, cart])
 
-    useEffect(() => {
-        const fetchProduct = async () => {
-            const res = await fetch(`https://dummyjson.com/products/${id}`, {
-                cache: "no-store",
-            })
-            const data = await res.json()
-            setProduct(data)
-        }
-        fetchProduct()
-    }, [id])
-
-    // get similar products api call
-    useEffect(() => {
-        const fetchSimilarProducts = async () => {
-            const res = await fetch(`https://dummyjson.com/products/category/${product?.category}?limit=4`)
-            const data = await res.json()
-            setSimilarProducts(data.products)
-        }
-        fetchSimilarProducts()
-    }, [product])
+    // Get similar products information
+    const { apiData: similarProductsResponse } = useFetch<similarProductsResponse>(`https://dummyjson.com/products/category/${product?.category}?limit=4`)
+    const similarProducts = similarProductsResponse?.products ?? []
 
     if (!product) {
         return (
@@ -107,12 +115,6 @@ export default function EachProductClient() {
             </div>
         )
     }
-
-    const discount = product?.discountPercentage
-    const discountPrice = (discount / 100) * product.price
-    const roundedDiscount = Number(discountPrice.toFixed(2))
-    const afterDiscountPrice = (product?.price - roundedDiscount)
-    const savedAmount = product.price - afterDiscountPrice
 
     return (
         <div>
@@ -229,7 +231,7 @@ export default function EachProductClient() {
             <div className="m-5 md:ml-[12%]">
                 <h1 className="text-2xl font-bold text-blue-950 flex items-center"><MdOutlineRateReview size={24} className="mr-3" />Customer Reviews</h1>
                 <div className="md:flex items-center flex-wrap">
-                    {product.reviews.map((review: Review) => {
+                    {product?.reviews?.map((review: Review) => {
                         const ids = Object.keys(avatarImages)
                         // eslint-disable-next-line react-hooks/purity
                         const randomId = Number(ids[Math.floor(Math.random() * ids.length)])
@@ -265,7 +267,7 @@ export default function EachProductClient() {
             </div>
             <h1 className="text-blue-950 font-bold text-2xl ml-[7%] md:ml-[12%] flex items-center justify-start"><HiSquare3Stack3D size={24} className="mr-3" />Similar products</h1>
             <div className="m-5 md:ml-[12%] mb-[20%] md:mb-3 flex flex-wrap items-center justify-center md:justify-start">
-                {similarProducts.map((eachSimilarProduct: Product) => {
+                {similarProducts?.map((eachSimilarProduct: Product) => {
                     return (
                         <div
                             key={eachSimilarProduct.id}
